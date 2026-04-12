@@ -1,4 +1,6 @@
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -16,7 +18,7 @@
   --accent-bright: #4d73ff;
   --accent-dim: #0022a1;
   --accent-glow: rgba(26, 74, 255, 0.25);
-  
+
   /* Fallbacks to not break existing code relying on --green */
   --green: var(--accent);
   --green-bright: var(--accent-bright);
@@ -24,8 +26,8 @@
 
   /* Text — bright white against pure black */
   --text: #ffffff;
-  --text-muted: #a1a1aa;      
-  --text-dim: #52525b;        
+  --text-muted: #a1a1aa;
+  --text-dim: #52525b;
 
   /* Borders */
   --border: rgba(255, 255, 255, 0.08);
@@ -39,11 +41,11 @@
   --ease-in-expo: cubic-bezier(0.7, 0, 0.84, 0);
 
   /* Typographic scale (bumped up slightly for brutalist impact) */
-  --text-xs: 12px;    
-  --text-sm: 14px;    
-  --text-base: 17px;  
-  --text-lg: 20px;    
-  --text-xl: 26px;    
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 17px;
+  --text-lg: 20px;
+  --text-xl: 26px;
 }
 
 html {
@@ -77,37 +79,46 @@ body::after {
   mix-blend-mode: overlay;
 }
 
-/* Mouse-tracking vibrant glow spotlight */
+/* Premium Multi-Color Atmospheric Tracking Glow */
 body::before {
   content: '';
   position: fixed;
-  top: var(--mouse-y, -1000px);
-  left: var(--mouse-x, -1000px);
-  width: 1400px; /* huge spread */
-  height: 1400px;
-  background: 
-    radial-gradient(circle at 40% 40%, rgba(26, 74, 255, 0.4) 0%, transparent 40%),
-    radial-gradient(circle at 60% 60%, rgba(255, 0, 128, 0.25) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.15) 0%, transparent 60%);
-  transform: translate(-50%, -50%);
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  /* Beautifully balanced organic color mix */
+  background:
+    radial-gradient(circle at center, rgba(30, 80, 255, 0.6) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(255, 0, 128, 0.25) 0%, transparent 60%),
+    radial-gradient(circle at 60% 60%, rgba(0, 255, 255, 0.15) 0%, transparent 55%);
+  /* Dramatic spread for the flashlight mask */
+  -webkit-mask-image: radial-gradient(circle at var(--mouse-x, 50vw) var(--mouse-y, 50vh), black 0%, transparent 35vw);
+  mask-image: radial-gradient(circle at var(--mouse-x, 50vw) var(--mouse-y, 50vh), black 0%, transparent 35vw);
   pointer-events: none;
-  z-index: 0; /* Behind everything */
-  border-radius: 50%;
+  z-index: 0;
   mix-blend-mode: screen;
-  filter: blur(40px); /* Deep atmospheric diffusion */
-  transition: width 0.3s ease, height 0.3s ease;
+  opacity: 0.85;
+  /* Balanced brightness */
 }
 
 /* Stunning Global Hover Disrupt Effects - Apply to paragraphs, lists, headers */
 .global-text-fx transition-parent {
   perspective: 1000px;
 }
-p, li, h2, h3, h4, span.interactive-fx {
+
+p,
+li,
+h2,
+h3,
+h4,
+span.interactive-fx {
   transition: transform 0.4s var(--ease-expo), color 0.4s ease, text-shadow 0.4s ease;
 }
-p:hover, 
-li:hover, 
-h3:hover, 
+
+p:hover,
+li:hover,
+h3:hover,
 .interactive-fx:hover {
   transform: scale(1.02) translateX(4px);
   color: var(--text);
@@ -146,9 +157,11 @@ img {
 ::-webkit-scrollbar {
   width: 4px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--accent-dim);
   border-radius: 2px;

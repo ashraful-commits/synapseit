@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST='{"components\\\\Hero.tsx -> ./HeroSphere":{"id":7604,"files":["static/chunks/b536a0f1.bbdda97432f02318.js","static/chunks/604.5b931d917c661db5.js"]}}';
+self.__REACT_LOADABLE_MANIFEST="{\"components\\\\Hero.tsx -> ./HeroSphere\":{\"id\":\"components\\\\Hero.tsx -> ./HeroSphere\",\"files\":[\"static/chunks/_app-pages-browser_src_components_HeroSphere_tsx.js\"]}}"
