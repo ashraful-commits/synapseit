@@ -124,6 +124,13 @@ const ServiceHeader = styled.div<{ active: boolean }>`
     opacity: 1 !important;
     transform: translateX(24px);
   }
+
+  @media (max-width: 768px) {
+    padding: 32px 0;
+    gap: 12px;
+    flex-wrap: wrap;
+    &:hover { transform: none; }
+  }
 `
 
 const ServiceNum = styled.span`
@@ -133,6 +140,11 @@ const ServiceNum = styled.span`
   color: var(--text-dim);
   letter-spacing: 0.08em;
   min-width: 36px;
+
+  @media (max-width: 768px) {
+    font-size: 12px;
+    min-width: 24px;
+  }
 `
 
 const ServiceName = styled.h3<{ active: boolean }>`
@@ -148,6 +160,12 @@ const ServiceName = styled.h3<{ active: boolean }>`
   line-height: 1.0;
   position: relative;
 
+  @media (max-width: 768px) {
+    font-size: 20px;
+    line-height: 1.2;
+    -webkit-text-stroke: ${({ active }) => active ? '0px' : '0.5px var(--border-mid)'};
+  }
+
   &::before {
     content: attr(data-text);
     position: absolute;
@@ -158,6 +176,10 @@ const ServiceName = styled.h3<{ active: boolean }>`
     overflow: hidden;
     width: 0%;
     transition: width 0.6s var(--ease-expo);
+  }
+
+  @media (max-width: 768px) {
+    &::before { display: none; } /* Disable progressive fill on mobile to prevent overflow */
   }
 
   ${ServiceItem}:hover &::before {
@@ -174,6 +196,15 @@ const ServiceMeta = styled.span`
   opacity: 0.9;
   min-width: 140px;
   text-align: right;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    text-align: left;
+    margin-left: 36px;
+    font-size: 11px;
+    order: 3;
+    margin-top: -8px;
+  }
 `
 
 const PlusIcon = styled.span<{ active: boolean }>`
