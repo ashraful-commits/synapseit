@@ -13,7 +13,6 @@ if (typeof window !== 'undefined') {
 
 const Section = styled.section`
   position: relative;
-  background: var(--bg);
   padding: 120px 0 0;
   overflow: hidden;
 `
@@ -22,6 +21,8 @@ const Inner = styled.div`
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 64px;
+  position: relative;
+  z-index: 10;
 
   @media (max-width: 768px) {
     padding: 0 24px;
@@ -65,42 +66,9 @@ const SectionTitle = styled.h2`
   margin: 0; 
 `
 
-const BackgroundLayer = styled.div`
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-`
 
-const ParallaxImage = styled(motion.div)`
-  position: absolute;
-  top: -10%;
-  left: 0;
-  width: 100%;
-  height: 120%;
-  background: url('/images/office.png') center/cover no-repeat;
-  background-color: var(--bg-lift);
-  z-index: 0;
-  opacity: 0.5; /* Fade image slightly to prioritize text */
-  
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, #090e14 0%, #1a4aff 100%);
-    opacity: 0.3;
-    mix-blend-mode: overlay;
-  }
-`
 
-const ParallaxOverlay = styled.div`
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at center, transparent 0%, var(--bg) 100%),
-              linear-gradient(to bottom, var(--bg) 0%, transparent 20%, transparent 80%, var(--bg) 100%);
-  z-index: 1;
-`
+
 
 const SplitContent = styled.div`
   display: grid;
@@ -128,7 +96,7 @@ const MassiveQuote = styled.div`
   
   .word {
     display: inline-block;
-    opacity: 0.1;
+    opacity: 0.6; /* Increased further for immediate clarity */
     transform: translateY(10px);
   }
 `
@@ -143,7 +111,7 @@ const Description = styled.p`
   font-size: 18px;
   font-weight: 300;
   line-height: 1.8;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.85); /* Brighter for better visibility */
 `
 
 const StatsGrid = styled.div`
@@ -181,7 +149,7 @@ const StatLabel = styled.div`
   font-weight: 600;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: rgba(255, 255, 255, 0.6); /* Brighter than var(--text-dim) */
 `
 
 const FeatureList = styled.div`
@@ -220,9 +188,18 @@ const FeatureHeader = styled.div`
 `
 
 const FeatureIcon = styled.div`
-  font-size: 24px;
+  width: 32px;
+  height: 32px;
   color: var(--accent);
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
 `
 
 const FeatureTitle = styled.h3`
@@ -283,13 +260,7 @@ export default function About() {
 
   return (
     <Section id="about" ref={containerRef}>
-      <MotionPathWaypoints d="M500 0 Q 300 250 500 500 T 0 500" />
-      <BackgroundLayer>
-        <ParallaxImage style={{ y: parallaxY }} />
-        <ParallaxOverlay />
-      </BackgroundLayer>
-
-      <Inner style={{ position: 'relative', zIndex: 10 }}>
+      <Inner>
         <Header>
           <SectionLabel><SkewReveal text="About Synapse IT" /></SectionLabel>
           <SectionTitle>
@@ -298,7 +269,7 @@ export default function About() {
         </Header>
       </Inner>
 
-      <Inner style={{ position: 'relative', zIndex: 10 }}>
+      <Inner>
         <SplitContent>
           <MassiveQuote ref={quoteRef}>
             {quoteText.split(' ').map((word, i) => (
@@ -337,10 +308,26 @@ export default function About() {
 
         <FeatureList>
           {[
-            { icon: '✦', title: 'Substance Over Speed', desc: 'We don\'t optimise for velocity at the expense of quality. Every decision — from architecture to deployment — is made with the product\'s long-term health in mind.' },
-            { icon: '◉', title: 'Ownership, Not Attendance', desc: 'Our teams take responsibility for outcomes, not just tasks. When something isn\'t working, we raise it. When something can be better, we propose it.' },
-            { icon: '↗', title: 'Cross-Functional by Design', desc: 'Engineering, design, QA, and DevOps collaborate daily — not as separate departments handing off deliverables. This integrated structure eliminates gaps.' },
-            { icon: '◈', title: 'Commercially Flexible', desc: 'Resource augmentation, hourly advisory, or fixed-scope delivery. We match the commercial structure to the project reality without compromising quality.' },
+            {
+              icon: <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L14.85 9.15L22 12L14.85 14.85L12 22L9.15 14.85L2 12L9.15 9.15L12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+              title: 'Substance Over Speed',
+              desc: 'We don\'t optimise for velocity at the expense of quality. Every decision — from architecture to deployment — is made with the product\'s long-term health in mind.'
+            },
+            {
+              icon: <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" /><circle cx="12" cy="12" r="3" fill="currentColor" /></svg>,
+              title: 'Ownership, Not Attendance',
+              desc: 'Our teams take responsibility for outcomes, not just tasks. When something isn\'t working, we raise it. When something can be better, we propose it.'
+            },
+            {
+              icon: <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4H20V20H4V4Z" stroke="currentColor" strokeWidth="1.5" /><path d="M4 12H20" stroke="currentColor" strokeWidth="1.5" /><path d="M12 4V20" stroke="currentColor" strokeWidth="1.5" /></svg>,
+              title: 'Cross-Functional by Design',
+              desc: 'Engineering, design, QA, and DevOps collaborate daily — not as separate departments handing off deliverables. This integrated structure eliminates gaps.'
+            },
+            {
+              icon: <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="1.5" /><path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="1.5" /><path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="1.5" /></svg>,
+              title: 'Commercially Flexible',
+              desc: 'Resource augmentation, hourly advisory, or fixed-scope delivery. We match the commercial structure to the project reality without compromising quality.'
+            },
           ].map((f, i) => (
             <FeatureRow key={i}>
               <FeatureHeader>
