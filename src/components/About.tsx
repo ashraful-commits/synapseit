@@ -15,6 +15,11 @@ const Section = styled.section`
   position: relative;
   padding: 120px 0 0;
   overflow: hidden;
+  
+  @media (max-width: 768px) {
+    padding: 80px 0 40px;
+    background: rgba(255, 255, 255, 0.02); /* Subtle mobile background */
+  }
 `
 
 const Inner = styled.div`

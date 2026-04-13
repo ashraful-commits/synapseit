@@ -5,6 +5,7 @@ import Hero from '@/components/Hero'
 import Marquee from '@/components/Marquee'
 import Stats from '@/components/Stats'
 import Services from '@/components/Services'
+import Engagement from '@/components/Engagement'
 import Work from '@/components/Work'
 import Process from '@/components/Process'
 import About from '@/components/About'
@@ -20,6 +21,7 @@ export default function Home() {
         <Marquee />
         <Stats />
         <Services />
+        <Engagement />
         <Work />
         <Process />
         <About />
