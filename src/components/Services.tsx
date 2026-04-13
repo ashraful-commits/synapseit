@@ -81,6 +81,13 @@ const SectionTitle = styled.h2`
   line-height: 0.95;
   letter-spacing: -0.03em;
 
+  @media (max-width: 768px) {
+    font-size: clamp(24px, 11vw, 38px);
+    line-height: 1.1;
+    word-break: normal;
+    overflow-wrap: break-word;
+  }
+
   em {
     font-style: italic;
     color: var(--accent);

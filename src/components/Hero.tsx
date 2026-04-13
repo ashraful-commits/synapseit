@@ -120,6 +120,12 @@ const Title = styled.h1`
   letter-spacing: -0.01em;
   color: var(--text);
   -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1);
+
+  @media (max-width: 768px) {
+    font-size: clamp(20px, 9vw, 36px);
+    line-height: 1.2;
+    word-break: break-word;
+  }
 `
 
 const TitleLine = styled.div`
@@ -221,7 +227,7 @@ const MagneticTag = ({ children }: { children: React.ReactNode }) => {
       }}
     >
       {isString ? (
-        <Tag style={{ 
+        <Tag style={{
           borderColor: isHovered ? 'var(--accent)' : 'var(--border)',
           color: isHovered ? 'var(--text)' : 'var(--text-dim)',
           background: isHovered ? 'rgba(255,255,255,0.03)' : 'transparent',
@@ -335,13 +341,13 @@ const Meta = styled.div`
 
 const RollingTag = ({ children }: { children: string }) => {
   const [isHovered, setIsHovered] = useState(false)
-  
+
   return (
-    <Tag 
+    <Tag
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      style={{ 
-        overflow: 'hidden', 
+      style={{
+        overflow: 'hidden',
         height: '36px',
         padding: '0 14px', /* Reset padding to handle center alignment properly */
         display: 'flex',
@@ -440,7 +446,7 @@ export default function Hero() {
   const meta = useRef<HTMLDivElement>(null)
   const scroll = useRef<HTMLDivElement>(null)
   const container = useRef<HTMLDivElement>(null)
-  
+
   const titleX = useMotionValue(0)
   const titleY = useMotionValue(0)
   const titleXSpring = useSpring(titleX, { stiffness: 100, damping: 30 })
@@ -501,8 +507,8 @@ export default function Hero() {
           <EyebrowText>Software Engineering</EyebrowText>
         </Eyebrow>
 
-        <motion.div 
-          data-cursor-lens 
+        <motion.div
+          data-cursor-lens
           style={{ x: titleXSpring, y: titleYSpring }}
         >
           <TitleContainer ref={titleContainerRef}>
@@ -521,7 +527,7 @@ export default function Hero() {
                 <HeroSplitText text="engineering." />
               </ItalicLine>
             </Title>
-            
+
             {/* True Optical Zoom Layer */}
             <MagnifiedGlass>
               <ZoomLayer>
