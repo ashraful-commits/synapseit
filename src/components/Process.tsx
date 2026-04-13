@@ -1,288 +1,461 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import styled from '@emotion/styled'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { BlurReveal, VariableH, Scramble } from './TypoEffects'
 
 if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger)
+    gsap.registerPlugin(ScrollTrigger)
 }
 
-const Section = styled.section`
+/* ─── Styled Components ─────────────────────────────────────── */
+
+const ProcessSection = styled.section`
   background: var(--bg);
-  padding: 140px 0;
+  position: relative;
   overflow: hidden;
+  height: 100vh; /* Lock height to viewport for perfect pinning */
 `
 
-const Inner = styled.div`
+const ProcessNoise = styled.div`
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  z-index: 5;
+`
+
+const ProcessHeader = styled.div`
   max-width: 1300px;
   margin: 0 auto;
-  padding: 0 64px;
-`
-
-const Header = styled.div`
+  padding: 80px 64px 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.2fr 1fr;
   gap: 60px;
-  align-items: end;
-  margin-bottom: 100px;
+  align-items: center;
+  position: relative;
+  z-index: 20;
+
+  @media (max-width: 768px) {
+    padding: 60px 24px 0;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
 `
 
-const SectionLabel = styled.div`
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.2em;
+const HeaderLabel = styled.div`
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: var(--green);
-  margin-bottom: 24px;
+  color: var(--accent);
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   &::before {
     content: '';
     display: block;
-    width: 32px;
+    width: 24px;
     height: 1px;
-    background: var(--green);
+    background: var(--accent);
   }
 `
 
-const SectionTitle = styled.h2`
+const HeaderTitle = styled.h2`
   font-family: var(--font-display);
-  font-size: clamp(42px, 4.8vw, 68px);
+  font-size: clamp(32px, 4vw, 56px);
   font-weight: 300;
   color: var(--text);
-  line-height: 1.0;
-  letter-spacing: -0.02em;
-  em { font-style: italic; color: var(--green); }
-`
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
 
-const HeaderRight = styled.p`
-  font-size: 16px;
-  font-weight: 300;
-  line-height: 1.8;
-  color: var(--text-muted);
-  max-width: 420px;
-  align-self: end;
-`
-
-const Steps = styled.div`
-  position: relative;
-  &::before {
-    content: '';
-    position: absolute;
-    left: 20px;
-    top: 0; bottom: 0;
-    width: 1px;
-    background: var(--border);
+  em {
+    font-style: italic;
+    color: var(--accent);
+    font-family: serif;
+    font-weight: 400;
   }
 `
 
-const Step = styled.div`
-  display: grid;
-  grid-template-columns: 44px 1fr;
-  gap: 40px;
-  padding: 0 0 72px;
-  position: relative;
+const HeaderSub = styled.p`
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 380px;
+  border-left: 1px solid var(--border-mid);
+  padding-left: 24px;
+
+  @media (max-width: 768px) {
+    display: none; /* Hide sub on mobile to save vertical space */
+  }
 `
 
-const StepDot = styled.div`
+const StickyContainer = styled.div`
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0; left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 80px; /* Offset to center cards under header */
+`
+
+const CardsWrapper = styled.div`
   position: relative;
-  z-index: 1;
-  padding-top: 4px;
+  width: 100%;
+  max-width: 1100px;
+  height: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  @media (max-width: 1024px) {
+    height: 600px;
+    padding: 0 40px;
+  }
+  @media (max-width: 768px) {
+    height: auto;
+    min-height: 520px;
+    padding: 0 20px;
+  }
+`
+
+const CardItem = styled(motion.div)`
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 32px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 80px;
+  padding: 60px 80px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 
+    0 40px 100px -20px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  will-change: transform, opacity, filter;
+  transform-origin: center top;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding: 60px 48px;
+    height: auto;
+    min-height: 500px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 40px 24px;
+    border-radius: 24px;
+    gap: 24px;
+  }
+`
+
+const CardLeft = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0;
+  gap: 20px;
+  justify-content: center;
 `
 
-const Dot = styled.div<{ active?: boolean }>`
-  width: 11px; height: 11px;
-  border-radius: 50%;
-  border: 2px solid ${({ active }) => active ? 'var(--green)' : 'var(--border-mid)'};
-  background: ${({ active }) => active ? 'var(--green)' : 'var(--bg)'};
-  transition: all 0.4s ease;
-  box-shadow: ${({ active }) => active ? '0 0 14px var(--green)' : 'none'};
-`
-
-const StepContent = styled.div``
-
-const StepNum = styled.div`
+const StepIndex = styled.div`
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
+  font-weight: 700;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--green-dim);
-  margin-bottom: 16px;
+  color: var(--accent);
 `
 
 const StepName = styled.h3`
   font-family: var(--font-display);
-  font-size: clamp(26px, 2.8vw, 40px);
+  font-size: clamp(40px, 4.5vw, 68px);
   font-weight: 300;
   color: var(--text);
-  margin-bottom: 20px;
-  letter-spacing: -0.01em;
-  line-height: 1.1;
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+  text-transform: uppercase;
 `
 
-const StepBody = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 48px;
-`
-
-const StepDesc = styled.p`
-  font-size: 15px;
-  font-weight: 300;
-  line-height: 1.85;
-  color: var(--text-muted);
-`
-
-const StepMeta = styled.div``
-
-const MetaItem = styled.div`
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--text-muted);
+const CardRight = styled.div`
   display: flex;
-  gap: 12px;
-  &::before {
-    content: '↗';
-    color: var(--green);
-    font-size: 12px;
-    flex-shrink: 0;
-    margin-top: 1px;
+  flex-direction: column;
+  gap: 40px;
+  padding-left: 60px;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+
+  @media (max-width: 1024px) {
+    padding-left: 0;
+    border-left: none;
+    gap: 24px;
   }
 `
 
-const MetaLabel = styled.div`
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  margin-bottom: 12px;
+const StepDesc = styled.p`
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.8;
+  color: var(--text-muted);
 `
 
+const DeliverablesGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px 40px;
+`
+
+const DItem = styled.div`
+  display: flex;
+  gap: 14px;
+  font-size: 14px;
+  color: var(--text-muted);
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+  &:last-child { border-bottom: none; }
+  &::before { 
+    content: '→'; 
+    color: var(--accent); 
+    font-weight: bold;
+    transition: transform 0.3s ease;
+  }
+  &:hover {
+    color: var(--text);
+    padding-left: 8px;
+    &::before { transform: translateX(4px); }
+  }
+`
+
+const BigNum = styled.div`
+  font-family: var(--font-display);
+  font-size: clamp(140px, 20vw, 280px);
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.02);
+  line-height: 0.7;
+  position: absolute;
+  right: 0;
+  bottom: -20px;
+  pointer-events: none;
+`
+
+/* ─── Data ───────────────────────────────────────────────────── */
+
 const steps = [
-  {
-    name: 'Discover',
-    desc: 'Understanding your business objectives, user needs, technical landscape, and competitive context. We identify constraints early, define measurable success criteria, and ensure alignment across stakeholders.',
-    deliverables: ['Stakeholder and domain interviews', 'User research and competitive analysis', 'Technical feasibility assessment', 'Documented scope and success metrics'],
-  },
-  {
-    name: 'Plan',
-    desc: 'Architects and technical leads define the system design, data models, integration points, and technology stack. Delivery managers structure the roadmap into milestones with clear dependencies and risk mitigation.',
-    deliverables: ['System and data architecture documentation', 'Technology and platform selection rationale', 'Sprint plan and milestone roadmap', 'Risk register and mitigation protocols'],
-  },
-  {
-    name: 'Design',
-    desc: 'Our design practice starts with user flows and information architecture, progresses through wireframes and interactive prototypes, and validates decisions with real users before engineering commitment.',
-    deliverables: ['User journey mapping and flow diagrams', 'Interactive prototypes for key workflows', 'Design system with reusable components', 'Usability validation with target users'],
-  },
-  {
-    name: 'Develop',
-    desc: 'We build in focused two-week sprints, delivering working software at every cycle. Continuous integration ensures code quality, automated testing catches regressions, and every sprint closes with a working demonstration.',
-    deliverables: ['Sprint-based delivery with bi-weekly demos', 'Continuous integration and deployment pipeline', 'Code review and quality gate enforcement', 'Real-time progress visibility through project tools'],
-  },
-  {
-    name: 'Test',
-    desc: 'QA runs alongside development — not after it. Our engineers build automated test suites covering functional, performance, security, and accessibility dimensions. Manual exploratory testing targets edge cases.',
-    deliverables: ['Automated regression and end-to-end test suites', 'Performance and load testing under realistic conditions', 'Security assessment and vulnerability scanning', 'Cross-browser and cross-device validation'],
-  },
-  {
-    name: 'Deploy',
-    desc: 'We manage production deployments with staged rollout strategies, automated rollback procedures, and comprehensive monitoring from the first minute in production. Infrastructure is defined as code.',
-    deliverables: ['Staged deployment with canary or blue-green strategies', 'Automated rollback and recovery procedures', 'Production monitoring and alerting setup', 'Infrastructure-as-code documentation'],
-  },
-  {
-    name: 'Optimize',
-    desc: 'Post-launch, we monitor performance, analyse user behaviour, and identify optimisation opportunities. Iterative improvements are prioritised based on data — not intuition — ensuring every change delivers measurable value.',
-    deliverables: ['Performance monitoring and anomaly detection', 'User analytics and behaviour insights', 'Iterative feature improvement based on data', 'Ongoing maintenance and technical health reviews'],
-  },
+    {
+        name: 'Discovery',
+        desc: 'Deep extraction of business goals, user behavioral patterns, and competitive whitespace. This phase defines the strategic vector for the entire project.',
+        deliverables: ['Stakeholder alignment workshops', 'Competitive intelligence report', 'User persona mapping', 'Strategic scope definition'],
+        color: 'rgba(26,74,255,1)',
+    },
+    {
+        name: 'Architecture',
+        desc: 'Defining the structural integrity. We map data flows, service relationships, and technology stacks that prioritize scalability and future-proofing.',
+        deliverables: ['System relationship diagrams', 'Database schema modeling', 'API contract definitions', 'Scalability roadmap'],
+        color: 'rgba(26,160,255,1)',
+    },
+    {
+        name: 'Realization',
+        desc: 'High-fidelity execution. Designs are transformed into interactive prototypes and eventually production-grade systems with atomic precision.',
+        deliverables: ['Atomic design systems', 'Interactive high-fi prototypes', 'Motion and interaction specs', 'Component library audits'],
+        color: 'rgba(140,26,255,1)',
+    },
+    {
+        name: 'Engineering',
+        desc: 'Senior-led development utilizing modern CI/CD patterns. We build in vertical slices, ensuring testable, working code is delivered in every cycle.',
+        deliverables: ['Production-grade feature builds', 'Automated test suites', 'CI/CD pipeline hardening', 'Real-time performance logs'],
+        color: 'rgba(26,200,120,1)',
+    },
+    {
+        name: 'Optimization',
+        desc: 'Deployment is just the beginning. We monitor, measure, and refine based on real production telemetry to ensure peak performance.',
+        deliverables: ['Staged rollout management', 'Production monitoring setup', 'Performance audit reports', 'Infrastructure optimization'],
+        color: 'rgba(255,100,26,1)',
+    },
 ]
 
+const cardBgs = [
+    'linear-gradient(135deg, #0a0c16 0%, #0e1224 100%)',
+    'linear-gradient(135deg, #080e16 0%, #0a1622 100%)',
+    'linear-gradient(135deg, #0c0a16 0%, #120e24 100%)',
+    'linear-gradient(135deg, #0a120e 0%, #0c1a12 100%)',
+    'linear-gradient(135deg, #160c0a 0%, #22100a 100%)',
+]
+
+/* ─── Tilt Wrapper ─────────────────────────────────────── */
+
+function CardWithTilt({ children, style, className }: any) {
+    const x = useMotionValue(0)
+    const y = useMotionValue(0)
+    const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [5, -5]), { stiffness: 200, damping: 25 })
+    const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-5, 5]), { stiffness: 200, damping: 25 })
+    const ref = useRef<HTMLDivElement>(null)
+
+    function onMouseMove(e: React.MouseEvent) {
+        if (!ref.current) return
+        const rect = ref.current.getBoundingClientRect()
+        x.set((e.clientX - rect.left) / rect.width - 0.5)
+        y.set((e.clientY - rect.top) / rect.height - 0.5)
+    }
+
+    return (
+        <CardItem
+            ref={ref}
+            className={className}
+            onMouseMove={onMouseMove}
+            onMouseLeave={() => { x.set(0); y.set(0) }}
+            style={{ ...style, rotateX, rotateY }}
+        >
+            {children}
+        </CardItem>
+    )
+}
+
+/* ─── Main Component ─────────────────────────────────────────────── */
+
 export default function Process() {
-  const ref = useRef<HTMLDivElement>(null)
+    const sectionRef = useRef<HTMLElement>(null)
+    const stickyRef = useRef<HTMLDivElement>(null)
+    const [activeStep, setActiveStep] = useState(0)
 
-  useEffect(() => {
-    const stepEls = ref.current?.querySelectorAll('[data-step]')
-    if (!stepEls) return
+    useEffect(() => {
+        const section = sectionRef.current
+        const cards: HTMLElement[] = gsap.utils.toArray('.process-card')
+        const totalSteps = steps.length
 
-    stepEls.forEach((el) => {
-      const dot = el.querySelector('[data-dot]')
-      gsap.fromTo(el,
-        { opacity: 0, x: -30 },
-        {
-          opacity: 1, x: 0,
-          duration: 0.8,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: el,
-            start: 'top 80%',
-          }
-        }
-      )
-      if (dot) {
-        ScrollTrigger.create({
-          trigger: el,
-          start: 'top 75%',
-          onEnter: () => {
-            gsap.to(dot, { backgroundColor: 'var(--green)', borderColor: 'var(--green)', duration: 0.4, ease: 'power2.out' })
-          },
-          onLeaveBack: () => {
-            gsap.to(dot, { backgroundColor: 'var(--bg)', borderColor: 'var(--border-mid)', duration: 0.4 })
-          }
-        })
-      }
-    })
-  }, [])
+        if (!section) return
 
-  return (
-    <Section id="process">
-      <Inner>
-        <Header>
-          <div>
-            <SectionLabel>How We Deliver</SectionLabel>
-            <SectionTitle>
-              A process built on<br />
-              <em>discipline, not improvisation.</em>
-            </SectionTitle>
-          </div>
-          <HeaderRight>
-            Seven defined stages. Clear outputs at each gate. Every phase has
-            measurable outcomes, review points, and documented decisions — so you
-            always know where things stand.
-          </HeaderRight>
-        </Header>
+        const ctx = gsap.context(() => {
+            // Create a master timeline for the pinned section
+            const tl = gsap.timeline({
+                scrollTrigger: {
+                    id: 'process-trigger',
+                    trigger: section,
+                    start: 'top top',
+                    end: `+=${totalSteps * 150}%`, // Longer scroll for a 'pinned' feel
+                    pin: true,
+                    scrub: 1, // Smooth scrolling
+                    onUpdate: (self) => {
+                        const stepHeight = 1 / totalSteps
+                        const current = Math.min(Math.floor(self.progress / stepHeight), totalSteps - 1)
+                        setActiveStep(current)
+                    }
+                }
+            })
 
-        <Steps ref={ref}>
-          {steps.map((s, i) => (
-            <Step key={s.name} data-step>
-              <StepDot>
-                <Dot data-dot />
-              </StepDot>
-              <StepContent>
-                <StepNum>{String(i + 1).padStart(2, '0')} — {s.name}</StepNum>
-                <StepName>{s.name}</StepName>
-                <StepBody>
-                  <StepDesc>{s.desc}</StepDesc>
-                  <StepMeta>
-                    <MetaLabel>Deliverables</MetaLabel>
-                    {s.deliverables.map(d => (
-                      <MetaItem key={d}>{d}</MetaItem>
+            // Initial state for cards
+            gsap.set(cards, { y: 40, opacity: 0, visibility: 'hidden' })
+            if (cards[0]) {
+                gsap.set(cards[0], { y: 0, opacity: 1, visibility: 'visible' })
+            }
+
+            cards.forEach((card, i) => {
+                const nextCard = cards[i + 1]
+
+                if (nextCard) {
+                    // Exit current card completely
+                    tl.to(card, {
+                        y: -40,
+                        opacity: 0,
+                        duration: 1,
+                        ease: 'power2.inOut',
+                        onComplete: () => { gsap.set(card, { visibility: 'hidden' }) },
+                        onReverseComplete: () => { gsap.set(card, { visibility: 'visible' }) }
+                    }, i)
+
+                    // Entrance next card
+                    tl.to(nextCard, {
+                        y: 0,
+                        opacity: 1,
+                        visibility: 'visible',
+                        duration: 1,
+                        ease: 'power2.inOut'
+                    }, i)
+                }
+            })
+
+            // Enter animation for the header
+            gsap.from(['.p-label', '.p-title', '.p-sub'], {
+                y: 40,
+                opacity: 0,
+                stagger: 0.1,
+                duration: 0.8,
+                ease: 'power3.out',
+                scrollTrigger: {
+                    trigger: section,
+                    start: 'top 80%',
+                }
+            })
+        }, sectionRef)
+
+        return () => ctx.revert()
+    }, [])
+
+    return (
+        <ProcessSection id="process" ref={sectionRef}>
+            <ProcessNoise />
+
+            <ProcessHeader>
+                <div style={{ zIndex: 10 }}>
+                    <HeaderLabel className="p-label">
+                        Workflow <span style={{ opacity: 0.4 }}>/ 05 Units</span>
+                    </HeaderLabel>
+                    <HeaderTitle className="p-title">
+                        The standard for<br />
+                        <em>senior delivery.</em>
+                    </HeaderTitle>
+                </div>
+                <HeaderSub className="p-sub" style={{ zIndex: 10 }}>
+                    Our engineering culture is built on deterministic outcomes. We remove the variability of software development through a rigorous, multi-loop validation process.
+                </HeaderSub>
+            </ProcessHeader>
+
+            <StickyContainer ref={stickyRef}>
+                <CardsWrapper>
+                    {steps.map((s, i) => (
+                        <CardWithTilt
+                            key={s.name}
+                            className="process-card"
+                            style={{
+                                background: cardBgs[i],
+                                border: `1px solid ${s.color.replace('1)', '0.15)')}`,
+                                zIndex: i + 1,
+                            }}
+                        >
+                            <BigNum>{String(i + 1).padStart(2, '0')}</BigNum>
+
+                            <CardLeft>
+                                <StepIndex style={{ color: s.color }}>Unit 0{i + 1}</StepIndex>
+                                <StepName>
+                                    <Scramble text={s.name} />
+                                </StepName>
+                            </CardLeft>
+
+                            <CardRight>
+                                <StepDesc>{s.desc}</StepDesc>
+                                <div style={{ marginTop: 'auto' }}>
+                                    <div style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: '24px', opacity: 0.8 }}>
+                                        Critical Success Metrics
+                                    </div>
+                                    <DeliverablesGrid>
+                                        {s.deliverables.map(d => (
+                                            <DItem key={d}>{d}</DItem>
+                                        ))}
+                                    </DeliverablesGrid>
+                                </div>
+                            </CardRight>
+                        </CardWithTilt>
                     ))}
-                  </StepMeta>
-                </StepBody>
-              </StepContent>
-            </Step>
-          ))}
-        </Steps>
-      </Inner>
-    </Section>
-  )
+                </CardsWrapper>
+            </StickyContainer>
+        </ProcessSection>
+    )
 }

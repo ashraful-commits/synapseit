@@ -6,6 +6,10 @@ const FooterEl = styled.footer`
   background: var(--bg);
   border-top: 1px solid var(--border);
   padding: 88px 64px 52px;
+
+  @media (max-width: 768px) {
+    padding: 60px 24px 32px;
+  }
 `
 
 const Inner = styled.div`
@@ -19,6 +23,15 @@ const Top = styled.div`
   gap: 60px;
   padding-bottom: 68px;
   border-bottom: 1px solid var(--border);
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr 1fr;
+  }
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding-bottom: 40px;
+  }
 `
 
 const Brand = styled.div``
@@ -97,6 +110,12 @@ const Bottom = styled.div`
   padding-top: 36px;
   flex-wrap: wrap;
   gap: 12px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
 `
 
 const Copyright = styled.span`
@@ -109,6 +128,11 @@ const Copyright = styled.span`
 const BottomLinks = styled.div`
   display: flex;
   gap: 32px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 14px;
+  }
 `
 
 const BottomLink = styled.a`

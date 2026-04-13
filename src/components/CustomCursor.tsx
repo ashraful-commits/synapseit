@@ -8,28 +8,39 @@ const Outer = styled.div`
   position: fixed;
   top: 0; left: 0;
   width: 40px; height: 40px;
-  border: 1px solid var(--green);
+  background: white;
   border-radius: 50%;
   pointer-events: none;
   z-index: 9999;
   transform: translate(-50%, -50%);
   transition: opacity 0.3s;
   will-change: transform, width, height, border-radius;
+  mix-blend-mode: difference;
   overflow: hidden;
   background-size: cover;
   background-position: center;
+
+  @keyframes rotate-lens {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(360deg); }
+  }
+
+  &.lens-active {
+    animation: rotate-lens 4s linear infinite;
+  }
 `
 
 const Inner = styled.div`
   position: fixed;
   top: 0; left: 0;
-  width: 5px; height: 5px;
-  background: var(--green);
+  width: 8px; height: 8px;
+  background: white;
   border-radius: 50%;
   pointer-events: none;
   z-index: 9999;
   transform: translate(-50%, -50%);
   will-change: transform;
+  mix-blend-mode: difference;
 `
 
 const TextLabel = styled.div`
@@ -98,17 +109,19 @@ export default function CustomCursor() {
         const isBtn = target.tagName === 'BUTTON' || target.tagName === 'A'
 
         if (target.hasAttribute('data-cursor-lens')) {
+          outer.classList.add('lens-active')
+          gsap.to(target, { scale: 1.05, duration: 0.5, ease: 'power3.out' })
           gsap.to(outer, {
-            width: 180, height: 180,
-            background: 'transparent',
-            borderColor: '#fff',
-            borderWidth: '2px',
+            width: 200, height: 200,
+            background: 'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.05), transparent 60%)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            backgroundImage: 'none',
             opacity: 1,
-            mixBlendMode: 'normal',
-            backdropFilter: 'contrast(1.3) brightness(1.1)',
-            boxShadow: '0 0 40px rgba(255,255,255,0.2), inset 0 0 20px rgba(255,255,255,0.1)',
-            duration: 0.35,
-            ease: 'back.out(1.5)',
+            mixBlendMode: 'difference',
+            backdropFilter: 'none',
+            boxShadow: 'inset 0 0 30px rgba(255,255,255,0.05), 0 0 20px rgba(255,0,128,0.15), 0 0 20px rgba(0,255,255,0.15)',
+            duration: 0.5,
+            ease: 'power3.out',
           })
           gsap.to(inner, { opacity: 0, duration: 0.15 })
         } else if (target.hasAttribute('data-cursor-video')) {
@@ -143,11 +156,11 @@ export default function CustomCursor() {
           gsap.to(outer, {
             width: isBtn ? 64 : 54,
             height: isBtn ? 64 : 54,
-            borderColor: 'var(--accent-bright)',
-            background: 'transparent',
-            mixBlendMode: 'normal',
+            background: 'white',
+            borderColor: 'transparent',
+            mixBlendMode: 'difference',
             backdropFilter: 'none',
-            opacity: 0.7,
+            opacity: 1,
             duration: 0.25,
             ease: 'power2.out',
           })
@@ -156,16 +169,21 @@ export default function CustomCursor() {
       }
     }
 
-    const onLeave = () => {
+    const onLeave = (e: Event) => {
+      const target = e.currentTarget as HTMLElement
+      if (target.hasAttribute('data-cursor-lens')) {
+        gsap.to(target, { scale: 1, duration: 0.5, ease: 'power3.out' })
+      }
+      outer.classList.remove('lens-active')
       outer.style.backgroundImage = 'none'
       gsap.to(textLabel, { opacity: 0, duration: 0.1, onComplete: () => { textLabel.innerHTML = '' } })
       gsap.to(outer, {
         width: 40, height: 40,
         borderRadius: '50%',
-        background: 'transparent',
-        mixBlendMode: 'normal',
+        background: 'white',
+        mixBlendMode: 'difference',
         backdropFilter: 'none',
-        borderColor: 'var(--accent)',
+        borderColor: 'transparent',
         opacity: 1,
         duration: 0.25,
         ease: 'power2.out',

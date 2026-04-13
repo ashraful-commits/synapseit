@@ -17,6 +17,11 @@ const Nav = styled.nav<{ scrolled: boolean }>`
   background: ${({ scrolled }) => scrolled ? 'rgba(7, 13, 10, 0.90)' : 'transparent'};
   backdrop-filter: ${({ scrolled }) => scrolled ? 'blur(24px) saturate(160%)' : 'none'};
   border-bottom: 1px solid ${({ scrolled }) => scrolled ? 'rgba(255,255,255,0.07)' : 'transparent'};
+
+  @media (max-width: 768px) {
+    padding: 0 24px;
+    height: 72px;
+  }
 `
 
 const Logo = styled.a`
@@ -27,6 +32,7 @@ const Logo = styled.a`
   display: flex;
   align-items: center;
   gap: 2px;
+  z-index: 1002;
 
   .word { color: var(--text); }
   .accent {
@@ -47,11 +53,52 @@ const Logo = styled.a`
   &:hover .accent::after { transform: scaleX(1); }
 `
 
-const Links = styled.ul`
+const Links = styled.ul<{ isOpen: boolean }>`
   display: flex;
   list-style: none;
   gap: 40px;
   align-items: center;
+
+  @media (max-width: 768px) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(5, 5, 8, 0.98);
+    backdrop-filter: blur(24px);
+    flex-direction: column;
+    justify-content: center;
+    gap: 40px;
+    transform: ${({ isOpen }) => isOpen ? 'translateX(0)' : 'translateX(100%)'};
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 1000;
+  }
+`
+
+const Hamburger = styled.button<{ isOpen: boolean }>`
+  display: none;
+  @media (max-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 32px;
+    height: 20px;
+    z-index: 1002;
+    background: transparent;
+    border: none;
+    cursor: none;
+    span {
+      width: 100%;
+      height: 2px;
+      background: var(--text);
+      transition: all 0.3s ease;
+      transform-origin: left center;
+    }
+    span:nth-of-type(1) { transform: ${({ isOpen }) => isOpen ? 'rotate(45deg)' : 'rotate(0)'}; }
+    span:nth-of-type(2) { opacity: ${({ isOpen }) => isOpen ? 0 : 1}; }
+    span:nth-of-type(3) { transform: ${({ isOpen }) => isOpen ? 'rotate(-45deg)' : 'rotate(0)'}; }
+  }
 `
 
 const Link = styled.a`
@@ -88,6 +135,10 @@ const Link = styled.a`
     &::before { width: 100%; }
     &::after { width: 100%; }
   }
+
+  @media (max-width: 768px) {
+    font-size: 24px;
+  }
 `
 
 const CTA = styled.a`
@@ -107,11 +158,16 @@ const CTA = styled.a`
     color: var(--bg);
     transform: translateY(-1px);
   }
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 `
 
 export default function Navbar() {
   const navRef = useRef<HTMLElement>(null)
   const [scrolled, setScrolled] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
     gsap.fromTo(navRef.current,
@@ -123,14 +179,22 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'auto'
+    }
+  }, [isOpen])
+
   return (
     <Nav ref={navRef} scrolled={scrolled}>
-      <Logo href="/">
+      <Logo href="/" onClick={() => setIsOpen(false)}>
         <span className="word">Synapse</span>&nbsp;
         <span className="accent">IT</span>
       </Logo>
 
-      <Links>
+      <Links isOpen={isOpen}>
         {[
           { label: 'Services', href: '#services' },
           { label: 'Engagement', href: '#engagement' },
@@ -139,13 +203,24 @@ export default function Navbar() {
           { label: 'About', href: '#about' },
           { label: 'Contact', href: '#contact' },
         ].map(({ label, href }) => (
-          <li key={label}>
+          <li key={label} onClick={() => setIsOpen(false)}>
             <Link href={href} data-text={label}>{label}</Link>
           </li>
         ))}
+        {isOpen && (
+          <li onClick={() => setIsOpen(false)}>
+            <Link href="#contact" data-text="Get Started">Get Started</Link>
+          </li>
+        )}
       </Links>
 
       <CTA href="#contact">Get Started</CTA>
+
+      <Hamburger isOpen={isOpen} onClick={() => setIsOpen(!isOpen)}>
+        <span />
+        <span />
+        <span />
+      </Hamburger>
     </Nav>
   )
 }

@@ -88,7 +88,7 @@ export default function Loader() {
           textRef.current.style.setProperty('--fill-width', `${val}%`)
         }
         if (barRef.current) {
-          barRef.current.style.setProperty('--fill-width', `${val}%`)
+          barRef.current.style.width = `${val}%`
         }
       },
       onComplete: () => {

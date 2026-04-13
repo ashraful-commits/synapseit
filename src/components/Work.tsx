@@ -4,250 +4,174 @@ import { useEffect, useRef } from 'react'
 import styled from '@emotion/styled'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
+import MagneticButton from './MagneticButton'
+import { Scramble, VariableH, SkewReveal, WaveReveal, VelocitySkew, SplitLineReveal } from './TypoEffects'
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger)
 }
 
 const Outer = styled.section`
-  background: var(--bg-soft);
+  background: var(--bg);
   overflow: hidden;
 `
 
 const Sticky = styled.div`
   position: relative;
-`
-
-const Header = styled.div`
-  max-width: 1300px;
-  margin: 0 auto;
-  padding: 140px 64px 80px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
-  align-items: end;
-`
-
-const SectionLabel = styled.div`
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--green);
-  margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  &::before {
-    content: '';
-    display: block;
-    width: 32px;
-    height: 1px;
-    background: var(--green);
-  }
-`
-
-const SectionTitle = styled.h2`
-  font-family: var(--font-display);
-  font-size: clamp(42px, 4.8vw, 68px);
-  font-weight: 300;
-  color: var(--text);
-  line-height: 1.0;
-  letter-spacing: -0.02em;
-  em { font-style: italic; color: var(--green); }
-`
-
-const HeaderRight = styled.p`
-  font-size: 16px;
-  font-weight: 300;
-  line-height: 1.8;
-  color: var(--text-muted);
-  max-width: 400px;
-  align-self: end;
-`
-
-const HScroll = styled.div`
-  overflow: hidden;
-  border-top: 1px solid var(--border);
+  width: 100vw;
+  height: 100vh;
 `
 
 const Strip = styled.div`
   display: flex;
+  width: max-content;
+  height: 100%;
   will-change: transform;
 `
 
-const CardImageContainer = styled.div`
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  opacity: 0;
-  transition: opacity 0.6s ease-out, transform 1s ease-out;
-  transform: scale(1.05);
-  z-index: 0;
-`
-
-const CardOverlay = styled.div`
-  position: absolute;
-  inset: 0;
-  background: rgba(6, 11, 18, 0.85); // Matches var(--bg-lift) heavily transparent
-  z-index: 1;
-  transition: background 0.6s ease;
-`
-
 const Card = styled.div`
-  flex-shrink: 0;
-  width: 62vw;
-  min-height: 70vh;
-  border-right: 1px solid var(--border);
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  overflow: hidden;
-  position: relative;
-  
-  &:hover { 
-    ${CardImageContainer} { opacity: 0.35; transform: scale(1); }
-    ${CardOverlay} { background: rgba(5, 8, 12, 0.65); }
+  align-items: center;
+  padding: 0 10vw;
+  border-right: 1px solid rgba(255,255,255,0.05);
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    padding: 20px 24px;
+    gap: 20px;
+    align-content: center;
   }
 `
 
+const BackgroundParallax = styled.div`
+  position: absolute;
+  inset: -10vw -40vw; /* Wider to allow parallax sliding */
+  background: radial-gradient(circle at 50% 50%, rgba(26,74,255,0.05), rgba(5,8,12,1));
+  z-index: 0;
+  will-change: transform;
+`
 
-const CardLeft = styled.div`
-  padding: 64px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  border-right: 1px solid var(--border);
+const ContentLayer = styled.div`
   position: relative;
-  z-index: 5;
+  z-index: 10;
+  max-width: 600px;
 `
 
-const CardTop = styled.div``
-
-const IndustryTag = styled.div`
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--green);
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  span { color: var(--text-dim); }
-`
-
-const ClientInitial = styled.div`
-  width: 58px; height: 58px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.03);
-  backdrop-filter: blur(8px);
-  border-radius: 4px;
+const RightLayer = styled.div`
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  aspect-ratio: 4/3;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-display);
-  font-size: 30px;
-  font-weight: 300;
-  color: var(--text);
-  margin-bottom: 28px;
 `
+
+const TiltImageWrapper = styled(motion.div)<{ imgUrl: string }>`
+  width: 80%;
+  aspect-ratio: 16/10;
+  border-radius: 8px;
+  background-image: url(${props => props.imgUrl});
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 40px 100px -20px rgba(0,0,0,0.8);
+  transform-style: preserve-3d;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
+`
+
+function TiltImage({ imgUrl }: { imgUrl: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  let x = useMotionValue(0)
+  let y = useMotionValue(0)
+
+  let mouseXSpring = useSpring(x, { damping: 20, stiffness: 150 })
+  let mouseYSpring = useSpring(y, { damping: 20, stiffness: 150 })
+
+  let rotateX = useTransform(mouseYSpring, [-0.5, 0.5], [15, -15])
+  let rotateY = useTransform(mouseXSpring, [-0.5, 0.5], [-15, 15])
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!ref.current) return
+    const rect = ref.current.getBoundingClientRect()
+    const width = rect.width
+    const height = rect.height
+    const mouseX = e.clientX - rect.left
+    const mouseY = e.clientY - rect.top
+    x.set(mouseX / width - 0.5)
+    y.set(mouseY / height - 0.5)
+  }
+
+  return (
+    <div style={{ perspective: 1500, width: '100%', display: 'flex', justifyContent: 'flex-end' }}>
+      <TiltImageWrapper
+        ref={ref}
+        imgUrl={imgUrl}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => { x.set(0); y.set(0) }}
+        style={{ rotateX, rotateY }}
+      />
+    </div>
+  )
+}
 
 const CardTitle = styled.h3`
   font-family: var(--font-display);
-  font-size: clamp(34px, 3.2vw, 50px);
+  font-size: clamp(32px, 5vw, 64px);
   font-weight: 300;
   color: var(--text);
   line-height: 1.1;
-  letter-spacing: -0.015em;
-  margin-bottom: 24px;
-`
-
-const ChallengeLabel = styled.div`
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: -0.02em;
+  margin-bottom: 40px;
   text-transform: uppercase;
-  color: var(--text-dim);
-  margin-bottom: 12px;
+
+  @media (max-width: 768px) {
+    font-size: 32px;
+    margin-bottom: 24px;
+  }
 `
 
-const ChallengeText = styled.p`
-  font-size: 14px;
-  font-weight: 300;
-  line-height: 1.8;
-  color: var(--text-muted);
+const IndustryTag = styled.div`
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 20px;
 `
-
-const CardBottom = styled.div``
 
 const TagRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 40px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 24px;
+    gap: 8px;
+  }
 `
 
 const TechTag = styled.span`
-  padding: 6px 13px;
+  padding: 8px 16px;
   border: 1px solid rgba(255,255,255,0.15);
-  background: rgba(0,0,0,0.3);
-  backdrop-filter: blur(4px);
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(8px);
   font-size: 11px;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-  border-radius: 2px;
-`
-
-const CardRight = styled.div`
-  padding: 64px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  position: relative;
-  z-index: 5;
-`
-
-const ResultBlock = styled.div``
-
-const ResultLabel = styled.div`
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-weight: 500;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--text-dim);
-  margin-bottom: 14px;
-`
-
-const ResultText = styled.p`
-  font-size: 14px;
-  font-weight: 300;
-  line-height: 1.8;
   color: var(--text-muted);
-`
-
-const Visual = styled.div<{ imgUrl?: string }>`
-  width: 100%;
-  aspect-ratio: 4/3;
-  border-radius: 4px;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: ${({ imgUrl }) => imgUrl ? `url(${imgUrl})` : 'rgba(0,0,0,0.4)'};
-  background-size: cover;
-  background-position: center;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-    z-index: 0;
-  }
+  border-radius: 40px;
 `
 
 const VisualMetric = styled.div`
@@ -267,6 +191,10 @@ const BigNum = styled.div`
   letter-spacing: -0.03em;
   line-height: 1;
   span { color: var(--green); }
+
+  @media (max-width: 768px) {
+    font-size: 42px;
+  }
 `
 
 const BigLabel = styled.div`
@@ -352,84 +280,90 @@ export default function Work() {
     if (!outer || !strip) return
 
     const ctx = gsap.context(() => {
-      const totalWidth = strip.scrollWidth - window.innerWidth
+      let mm = gsap.matchMedia();
+      const bgs = gsap.utils.toArray('.par-bg');
+      
+      mm.add("(min-width: 1px)", () => {
+        // Fade in the cards
+        const cards = gsap.utils.toArray('.par-card')
+        gsap.fromTo(cards, 
+          { opacity: 0, y: 50 },
+          {
+            opacity: 1, y: 0,
+            duration: 0.8,
+            stagger: 0.2,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: outer,
+              start: 'top 75%',
+            }
+          }
+        )
 
-      gsap.to(strip, {
-        x: -totalWidth,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: outer,
-          start: 'top top',
-          end: `+=${totalWidth * 1.1}`,
-          pin: true,
-          scrub: 1.2,
-          anticipatePin: 1,
-        }
-      })
-    }, outer)
+        // Pin the outer container and scrub horizontally
+        gsap.to(strip, {
+          x: () => -(strip.scrollWidth - window.innerWidth),
+          ease: 'none',
+          scrollTrigger: {
+            trigger: outer,
+            start: 'top top',
+            end: () => `+=${(strip.scrollWidth - window.innerWidth) * 1.5}`,
+            pin: true,
+            scrub: 1.2,
+            invalidateOnRefresh: true,
+            anticipatePin: 1,
+          }
+        })
+
+        // Add parallax to the backgrounds
+        bgs.forEach((bg, i) => {
+          gsap.to(bg as HTMLElement, {
+            x: '40vw',
+            ease: 'none',
+            scrollTrigger: {
+              trigger: outer,
+              start: 'top top',
+              end: () => `+=${(strip.scrollWidth - window.innerWidth) * 1.5}`,
+              invalidateOnRefresh: true,
+              scrub: 1.2,
+            }
+          })
+        })
+      });
+    }, outerRef)
 
     return () => ctx.revert()
   }, [])
 
   return (
     <Outer id="work">
-      <Header>
-        <div>
-          <SectionLabel>Selected Work</SectionLabel>
-          <SectionTitle>
-            Problems solved,<br />
-            <em>outcomes measured.</em>
-          </SectionTitle>
-        </div>
-        <HeaderRight>
-          Every project below involved cross-functional delivery — engineering,
-          design, QA, and DevOps working as one team toward measurable business outcomes.
-        </HeaderRight>
-      </Header>
-
       <Sticky ref={outerRef}>
-        <HScroll>
-          <Strip ref={stripRef}>
-            {cases.map((c) => (
-              <Card key={c.title} data-cursor-text="DRAG">
-                <CardImageContainer style={{ backgroundImage: `url(${c.imgUrl})` }} />
-                <CardOverlay />
+        <Strip ref={stripRef}>
+          {cases.map((c) => (
+            <Card key={c.title} className="par-card">
+              <BackgroundParallax className="par-bg" />
+              
+              <ContentLayer>
+                <IndustryTag>
+                  {c.industry} &nbsp;&mdash;&nbsp; {c.client}
+                </IndustryTag>
+                <CardTitle><SplitLineReveal text={c.title} /></CardTitle>
                 
-                <CardLeft>
-                  <CardTop>
-                    <ClientInitial>{c.client}</ClientInitial>
-                    <IndustryTag>
-                      {c.industry} <span>·</span> {c.services}
-                    </IndustryTag>
-                    <CardTitle>{c.title}</CardTitle>
-                    <ChallengeLabel>Challenge</ChallengeLabel>
-                    <ChallengeText>{c.challenge}</ChallengeText>
-                  </CardTop>
-                  <CardBottom>
-                    <TagRow>
-                      {c.tech.map(t => <TechTag key={t}>{t}</TechTag>)}
-                    </TagRow>
-                  </CardBottom>
-                </CardLeft>
-                <CardRight>
-                  <Visual imgUrl={c.imgUrl} data-cursor-video>
-                    <VisualMetric>
-                      <BigNum>{c.metric.includes('%') || c.metric.includes('+') || c.metric.includes('−')
-                        ? <><span>{c.metric}</span></>
-                        : c.metric}
-                      </BigNum>
-                      <BigLabel>{c.metricLabel}</BigLabel>
-                    </VisualMetric>
-                  </Visual>
-                  <ResultBlock>
-                    <ResultLabel>Result</ResultLabel>
-                    <ResultText>{c.result}</ResultText>
-                  </ResultBlock>
-                </CardRight>
-              </Card>
-            ))}
-          </Strip>
-        </HScroll>
+                <TagRow>
+                  {c.tech.map(t => <TechTag key={t}><Scramble text={t} triggerOnHover={true} /></TechTag>)}
+                </TagRow>
+
+                <MagneticButton variant="primary">
+                  View Case Study
+                </MagneticButton>
+              </ContentLayer>
+
+              <RightLayer>
+                <TiltImage imgUrl={c.imgUrl} />
+              </RightLayer>
+            </Card>
+          ))}
+        </Strip>
       </Sticky>
     </Outer>
   )

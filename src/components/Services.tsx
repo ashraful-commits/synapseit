@@ -304,7 +304,7 @@ const services = [
       'Scalable design systems reducing future development cost',
       'Consistent brand experience across platforms and touchpoints',
     ],
-    img: '/images/ecommerce.png', 
+    img: '/images/ecommerce.png',
     bg: '#006644', // Emerald Green
   },
   {

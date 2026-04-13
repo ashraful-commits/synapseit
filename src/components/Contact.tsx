@@ -1,7 +1,15 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import styled from '@emotion/styled'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import MagneticButton from './MagneticButton'
+import { SplitLineReveal, MotionPathWaypoints } from './TypoEffects'
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger)
+}
 
 const Section = styled.section`
   background: var(--bg);
@@ -13,6 +21,10 @@ const Inner = styled.div`
   max-width: 1300px;
   margin: 0 auto;
   padding: 0 64px;
+
+  @media (max-width: 768px) {
+    padding: 0 24px;
+  }
 `
 
 const BigCTA = styled.div`
@@ -69,31 +81,14 @@ const CTARow = styled.div`
   align-items: center;
   justify-content: center;
   gap: 32px;
-`
 
-const PrimaryBtn = styled.a`
-  display: inline-flex;
-  align-items: center;
-  gap: 14px;
-  padding: 20px 50px;
-  background: var(--green);
-  color: var(--bg);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  border-radius: 2px;
-  transition: all 0.3s var(--ease-expo);
-
-  svg { transition: transform 0.3s ease; }
-  &:hover {
-    background: var(--green-bright);
-    transform: translateY(-3px);
-    box-shadow: 0 28px 64px rgba(45, 216, 130, 0.32);
-    svg { transform: translateX(5px); }
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 20px;
   }
 `
 
+// Removed PrimaryBtn styled component
 const SecondaryBtn = styled.a`
   font-size: 12px;
   font-weight: 500;
@@ -125,6 +120,15 @@ const MetaItem = styled.span`
     padding-right: 22px;
     border-right: 1px solid var(--border-mid);
   }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+    border-right: none !important;
+    margin-bottom: 8px;
+    text-align: center;
+  }
 `
 
 const FormGrid = styled.div`
@@ -132,6 +136,12 @@ const FormGrid = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: 80px;
   padding: 100px 0;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 60px;
+    padding: 60px 0;
+  }
 `
 
 const FormLeft = styled.div``
@@ -225,6 +235,10 @@ const FieldGroup = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 `
 
 const Field = styled.div`
@@ -303,25 +317,7 @@ const Textarea = styled.textarea`
   }
 `
 
-const SubmitBtn = styled.button<{ sent: boolean }>`
-  padding: 18px 44px;
-  background: ${({ sent }) => sent ? 'var(--green-dim)' : 'var(--green)'};
-  color: var(--bg);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  border-radius: 2px;
-  transition: all 0.3s var(--ease-expo);
-  align-self: flex-start;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 20px 50px rgba(45, 216, 130, 0.28);
-    background: ${({ sent }) => sent ? 'var(--green-dim)' : 'var(--green-bright)'};
-  }
-`
-
+// Removed SubmitBtn styled component
 export default function Contact() {
   const [sent, setSent] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
@@ -335,12 +331,12 @@ export default function Contact() {
 
   return (
     <Section id="contact">
+      <MotionPathWaypoints d="M0 0 C 100 200 400 200 500 500" />
       <Inner>
         <BigCTA>
           <SectionLabel>Let&apos;s Build</SectionLabel>
           <BigTitle>
-            Ready to discuss<br />
-            <em>your next project?</em>
+            <SplitLineReveal text="Ready to discuss your next project?" />
           </BigTitle>
           <BigSubtitle>
             Tell us what you&apos;re building, your timeline, and any constraints.
@@ -348,12 +344,12 @@ export default function Contact() {
             and the right engagement model for your situation.
           </BigSubtitle>
           <CTARow>
-            <PrimaryBtn href="mailto:hello@synapseit.com">
+            <MagneticButton href="mailto:hello@synapseit.com" variant="primary">
               Start the Conversation
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
                 <path d="M1 7.5h13M8.5 2l5.5 5.5-5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-            </PrimaryBtn>
+            </MagneticButton>
             <SecondaryBtn href="#services">See Engagement Models</SecondaryBtn>
           </CTARow>
           <MetaRow>
@@ -366,8 +362,7 @@ export default function Contact() {
         <FormGrid>
           <FormLeft>
             <FormTitle>
-              Tell us what<br />
-              <em>you&apos;re building.</em>
+              <SplitLineReveal text="Tell us what you're building." />
             </FormTitle>
             <ContactInfo>
               <InfoItem>
@@ -442,9 +437,11 @@ export default function Contact() {
                 />
               </Field>
 
-              <SubmitBtn type="submit" sent={sent}>
-                {sent ? '✓ Inquiry Sent' : 'Submit Inquiry'}
-              </SubmitBtn>
+              <div style={{ alignSelf: 'flex-start' }}>
+                <MagneticButton type="submit" variant="primary" disabled={sent}>
+                  {sent ? '✓ Inquiry Sent' : 'Submit Inquiry'}
+                </MagneticButton>
+              </div>
             </Form>
           </FormRight>
         </FormGrid>

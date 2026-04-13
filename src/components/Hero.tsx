@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import styled from '@emotion/styled'
 import { gsap } from 'gsap'
+import { motion, useMotionValue, useSpring } from 'framer-motion'
 import dynamic from 'next/dynamic'
+import MagneticButton from './MagneticButton'
 
 const HeroSphere = dynamic(() => import('./HeroSphere'), { ssr: false })
 
@@ -35,6 +37,11 @@ const Badge = styled.div`
   align-items: center;
   gap: 10px;
   opacity: 0;
+
+  @media (max-width: 768px) {
+    right: 24px;
+    padding-top: 90px;
+  }
 `
 
 const BadgeDot = styled.span`
@@ -65,6 +72,11 @@ const Content = styled.div`
   padding-top: 120px;
   width: 100%;
   max-width: 90vw; /* let it break freely */
+
+  @media (max-width: 768px) {
+    padding: 0 24px;
+    padding-top: 100px;
+  }
 
   @media (min-width: 1024px) {
     padding: 0 80px;
@@ -111,41 +123,121 @@ const Title = styled.h1`
 `
 
 const TitleLine = styled.div`
-  padding: 15px 0;
-  margin: -15px 0;
+  /* Generous clipping for brutalist reveal + 1.8x zoom safety */
   overflow: visible;
+  padding: 5px 0;
 `
 
 const TitleSpan = styled.div`
   display: block;
-  transform: translateY(0%);
+  /* Setting initial state in GSAP, but ensuring block for splits */
   will-change: transform;
 `
 
 const ItalicLine = styled.div`
   font-style: italic;
-  color: var(--accent);
-  padding: 15px 0;
-  margin: -15px 0;
-`
-
-const ItalicSpan = styled.div`
   display: block;
-  transform: translateY(0%);
-`
-
-const HoverChar = styled.span`
-  display: inline-block;
-  white-space: pre;
+  padding: 5px 0;
   will-change: transform;
 `
 
-const SplitText = ({ text }: { text: string }) => (
-  <>
-    {text.split('').map((char, i) => (
-      <HoverChar key={i}>{char}</HoverChar>
-    ))}
-  </>
+const TitleContainer = styled.div`
+  position: relative;
+  display: inline-block;
+`
+
+const MagnifiedGlass = styled.div`
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 20;
+  clip-path: circle(100px at var(--local-mouse-x, -500px) var(--local-mouse-y, -500px));
+  opacity: 0;
+  transition: opacity 0.3s;
+  ${TitleContainer}:hover & {
+    opacity: 1;
+  }
+`
+
+const ZoomLayer = styled.div`
+  width: 100%;
+  height: 100%;
+  transform: scale(1.15);
+  transform-origin: var(--local-mouse-x, 50%) var(--local-mouse-y, 50%);
+  transition: transform 0.1s ease-out;
+
+  h1 {
+    color: var(--text) !important;
+    -webkit-text-stroke: 0px !important;
+    text-shadow: 0 4px 30px rgba(0,0,0,0.8);
+  }
+`
+
+import { Scramble, WaveReveal, VelocitySkew, GlitchText, BlurReveal, RevealText, SkewReveal, FadeScale, Highlighter, SplitLineReveal } from './TypoEffects'
+
+const MagneticTag = ({ children }: { children: React.ReactNode }) => {
+  const ref = useRef<HTMLSpanElement>(null)
+  const x = useMotionValue(0)
+  const y = useMotionValue(0)
+  const mouseXSpring = useSpring(x, { stiffness: 150, damping: 15, mass: 0.1 })
+  const mouseYSpring = useSpring(y, { stiffness: 150, damping: 15, mass: 0.1 })
+
+  const isString = typeof children === 'string'
+  const [displayText, setDisplayText] = useState(isString ? children : '')
+  const [isHovered, setIsHovered] = useState(false)
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!ref.current) return
+    const { left, top, width, height } = ref.current.getBoundingClientRect()
+    const cx = left + width / 2
+    const cy = top + height / 2
+    x.set((e.clientX - cx) * 0.5)
+    y.set((e.clientY - cy) * 0.5)
+  }
+
+  const handleMouseEnter = () => {
+    setIsHovered(true)
+  }
+
+  const handleMouseLeave = () => {
+    setIsHovered(false)
+    x.set(0)
+    y.set(0)
+  }
+
+  return (
+    <motion.span
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        x: mouseXSpring,
+        y: mouseYSpring,
+        position: 'relative',
+        display: 'inline-flex',
+        alignItems: 'center',
+        cursor: 'none'
+      }}
+    >
+      {isString ? (
+        <Tag style={{ 
+          borderColor: isHovered ? 'var(--accent)' : 'var(--border)',
+          color: isHovered ? 'var(--text)' : 'var(--text-dim)',
+          background: isHovered ? 'rgba(255,255,255,0.03)' : 'transparent',
+          boxShadow: isHovered ? '0 0 20px rgba(26,74,255,0.1)' : 'none'
+        }}>
+          {children}
+        </Tag>
+      ) : (
+        children
+      )}
+    </motion.span>
+  )
+}
+
+const HeroSplitText = ({ text, color }: { text: string, color?: string }) => (
+  <SplitLineReveal text={text} color={color} />
 )
 
 const Tagline = styled.p`
@@ -200,28 +292,11 @@ const Buttons = styled.div`
   margin-top: 52px;
   opacity: 0;
   transform: translateY(20px);
-`
 
-const PrimaryBtn = styled.a`
-  display: inline-flex;
-  align-items: center;
-  gap: 14px;
-  padding: 18px 44px;
-  background: var(--accent);
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  border-radius: 2px;
-  transition: all 0.4s var(--ease-expo);
-
-  svg { transition: transform 0.3s ease; }
-  &:hover {
-    background: var(--accent-bright);
-    transform: translateY(-3px);
-    box-shadow: 0 24px 60px var(--accent-glow);
-    svg { transform: translateX(5px); }
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
   }
 `
 
@@ -258,6 +333,35 @@ const Meta = styled.div`
   gap: 0;
 `
 
+const RollingTag = ({ children }: { children: string }) => {
+  const [isHovered, setIsHovered] = useState(false)
+  
+  return (
+    <Tag 
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{ 
+        overflow: 'hidden', 
+        height: '36px',
+        padding: '0 14px', /* Reset padding to handle center alignment properly */
+        display: 'flex',
+        alignItems: 'center',
+        borderColor: isHovered ? 'var(--accent)' : 'var(--border)',
+      }}
+    >
+      <div style={{ height: '36px', overflow: 'hidden', position: 'relative' }}>
+        <motion.div
+          animate={{ y: isHovered ? -36 : 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          style={{ display: 'flex', flexDirection: 'column' }}
+        >
+          <div style={{ height: '36px', display: 'flex', alignItems: 'center' }}>{children}</div>
+          <div style={{ height: '36px', display: 'flex', alignItems: 'center', color: 'var(--accent)' }}>{children}</div>
+        </motion.div>
+      </div>
+    </Tag>
+  )
+}
 const MetaItem = styled.span`
   font-size: 12px;
   font-weight: 400;
@@ -267,6 +371,14 @@ const MetaItem = styled.span`
     margin-right: 20px;
     padding-right: 20px;
     border-right: 1px solid var(--border-mid);
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    border-right: none !important;
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+    margin-bottom: 8px;
   }
 `
 
@@ -291,30 +403,35 @@ const ScrollWord = styled.span`
   color: var(--text-dim);
 `
 
-const ScrollBar = styled.div`
-  width: 1px;
-  height: 52px;
-  overflow: hidden;
-  position: relative;
-  &::after {
+const ScrollMouse = styled.div`
+  width: 22px;
+  height: 36px;
+  border: 1px solid var(--text-dim);
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  padding-top: 6px;
+
+  &::before {
     content: '';
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: linear-gradient(to bottom, var(--accent), transparent);
-    animation: scrollDrop 2.2s ease-in-out infinite;
+    width: 2px;
+    height: 6px;
+    background: var(--text-dim);
+    border-radius: 2px;
+    animation: scrollWheel 2s ease-in-out infinite;
   }
-  @keyframes scrollDrop {
-    0% { transform: translateY(-100%); }
-    50% { transform: translateY(0%); }
-    100% { transform: translateY(100%); }
+
+  @keyframes scrollWheel {
+    0% { transform: translateY(0); opacity: 1; }
+    50% { transform: translateY(8px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 0; }
   }
 `
 
 export default function Hero() {
-  const line1 = useRef<HTMLSpanElement>(null)
-  const line2 = useRef<HTMLSpanElement>(null)
-  const italic = useRef<HTMLSpanElement>(null)
+  const line1 = useRef<HTMLDivElement>(null)
+  const line2 = useRef<HTMLDivElement>(null)
+  const italic = useRef<HTMLDivElement>(null)
   const eyebrow = useRef<HTMLDivElement>(null)
   const badge = useRef<HTMLDivElement>(null)
   const tagline = useRef<HTMLParagraphElement>(null)
@@ -323,6 +440,28 @@ export default function Hero() {
   const meta = useRef<HTMLDivElement>(null)
   const scroll = useRef<HTMLDivElement>(null)
   const container = useRef<HTMLDivElement>(null)
+  
+  const titleX = useMotionValue(0)
+  const titleY = useMotionValue(0)
+  const titleXSpring = useSpring(titleX, { stiffness: 100, damping: 30 })
+  const titleYSpring = useSpring(titleY, { stiffness: 100, damping: 30 })
+
+  const titleContainerRef = useRef<HTMLDivElement>(null)
+
+  const handleTitleMouseMove = (e: React.MouseEvent) => {
+    const { clientX, clientY } = e
+    const moveX = (clientX - window.innerWidth / 2) / 30
+    const moveY = (clientY - window.innerHeight / 2) / 30
+    titleX.set(moveX)
+    titleY.set(moveY)
+
+    // Calculate local mouse for the magnifying glass
+    if (titleContainerRef.current) {
+      const rect = titleContainerRef.current.getBoundingClientRect()
+      titleContainerRef.current.style.setProperty('--local-mouse-x', `${clientX - rect.left}px`)
+      titleContainerRef.current.style.setProperty('--local-mouse-y', `${clientY - rect.top}px`)
+    }
+  }
 
   useEffect(() => {
     if (!container.current) return
@@ -339,63 +478,13 @@ export default function Hero() {
         .to(meta.current, { opacity: 1, duration: 0.5 }, '-=0.3')
         .to(badge.current, { opacity: 1, duration: 0.6 }, '-=0.5')
         .to(scroll.current, { opacity: 1, duration: 0.6 }, '-=0.2')
-
-      const chars = container.current?.querySelectorAll('span')
-      if (chars && chars.length > 0) {
-        const onMouseMove = (e: MouseEvent) => {
-          const mouseX = e.clientX
-          const mouseY = e.clientY
-
-          chars.forEach((char) => {
-            if (!char.closest('h1')) return
-
-            const rect = char.getBoundingClientRect()
-            const charCenterX = rect.left + rect.width / 2
-            const charCenterY = rect.top + rect.height / 2
-
-            const dist = Math.sqrt(Math.pow(mouseX - charCenterX, 2) + Math.pow(mouseY - charCenterY, 2))
-
-            const maxDist = 90 // Tightly bound to match lens radius
-            if (dist < maxDist) {
-              // High velocity magnification (1.8x zoom)
-              const proximityScale = 1 + (1 - dist / maxDist) * 0.8
-              const yPush = -(proximityScale - 1) * 30
-
-              gsap.to(char, {
-                scale: proximityScale,
-                y: yPush,
-                color: '#fff',
-                textShadow: '0px 0px 30px rgba(26, 74, 255, 0.6)',
-                zIndex: 100,
-                duration: 0.1,
-                ease: 'power3.out',
-                overwrite: 'auto'
-              })
-            } else {
-              // Clean return with overlap safety
-              gsap.to(char, {
-                scale: 1,
-                y: 0,
-                color: '',
-                textShadow: 'none',
-                zIndex: 1,
-                duration: 0.4,
-                ease: 'power2.inOut',
-                overwrite: 'auto'
-              })
-            }
-          })
-        }
-        window.addEventListener('mousemove', onMouseMove)
-        return () => window.removeEventListener('mousemove', onMouseMove)
-      }
     }, container)
 
     return () => ctx.revert()
   }, [])
 
   return (
-    <Section id="home" ref={container}>
+    <Section id="home" ref={container} onMouseMove={handleTitleMouseMove}>
       {/* Three.js morphing sphere — right half */}
       <HeroSphere />
 
@@ -412,11 +501,45 @@ export default function Hero() {
           <EyebrowText>Software Engineering</EyebrowText>
         </Eyebrow>
 
-        <Title>
-          <TitleLine><TitleSpan ref={line1} data-cursor-lens><SplitText text="Your software" /></TitleSpan></TitleLine>
-          <TitleLine><TitleSpan ref={line2} data-cursor-lens><SplitText text="deserves better" /></TitleSpan></TitleLine>
-          <ItalicLine><ItalicSpan ref={italic} data-cursor-lens><SplitText text="engineering." /></ItalicSpan></ItalicLine>
-        </Title>
+        <motion.div 
+          data-cursor-lens 
+          style={{ x: titleXSpring, y: titleYSpring }}
+        >
+          <TitleContainer ref={titleContainerRef}>
+            <Title>
+              <TitleLine>
+                <TitleSpan ref={line1}>
+                  <HeroSplitText text="Your software" color="#1a4aff" />
+                </TitleSpan>
+              </TitleLine>
+              <TitleLine>
+                <TitleSpan ref={line2}>
+                  <HeroSplitText text="deserves better" />
+                </TitleSpan>
+              </TitleLine>
+              <ItalicLine ref={italic}>
+                <HeroSplitText text="engineering." />
+              </ItalicLine>
+            </Title>
+            
+            {/* True Optical Zoom Layer */}
+            <MagnifiedGlass>
+              <ZoomLayer>
+                <Title aria-hidden="true">
+                  <TitleLine>
+                    <TitleSpan style={{ color: '#1a4aff' }}>Your software</TitleSpan>
+                  </TitleLine>
+                  <TitleLine>
+                    <TitleSpan>deserves better</TitleSpan>
+                  </TitleLine>
+                  <ItalicLine>
+                    engineering.
+                  </ItalicLine>
+                </Title>
+              </ZoomLayer>
+            </MagnifiedGlass>
+          </TitleContainer>
+        </motion.div>
 
         <Tagline ref={tagline}>
           We architect, build, and scale digital products for companies
@@ -424,31 +547,33 @@ export default function Hero() {
         </Tagline>
 
         <Tags ref={tags}>
-          {['Web Apps', 'Mobile', 'QA & Testing', 'UI/UX', 'DevOps & Cloud'].map(s => (
-            <Tag key={s}>{s}</Tag>
-          ))}
+          <MagneticTag>Web Apps</MagneticTag>
+          <MagneticTag children={<RollingTag children="Mobile" />} />
+          <MagneticTag>QA & Testing</MagneticTag>
+          <MagneticTag children={<RollingTag children="UI/UX" />} />
+          <MagneticTag>DevOps & Cloud</MagneticTag>
         </Tags>
 
         <Buttons ref={btns}>
-          <PrimaryBtn href="#contact">
+          <MagneticButton href="#contact" variant="primary">
             Start Your Project
             <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
               <path d="M1 7.5h13M8.5 2l5.5 5.5-5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-          </PrimaryBtn>
+          </MagneticButton>
           <SecondaryBtn href="#work">See Our Work</SecondaryBtn>
         </Buttons>
 
         <Meta ref={meta}>
-          <MetaItem>Response within 24 hours</MetaItem>
-          <MetaItem>120+ products delivered</MetaItem>
-          <MetaItem>98% client retention</MetaItem>
+          <MetaItem><BlurReveal text="Response within 24 hours" /></MetaItem>
+          <MetaItem><BlurReveal text="120+ products delivered" /></MetaItem>
+          <MetaItem><BlurReveal text="98% client retention" /></MetaItem>
         </Meta>
       </Content>
 
       <ScrollHint ref={scroll}>
         <ScrollWord>Scroll</ScrollWord>
-        <ScrollBar />
+        <ScrollMouse />
       </ScrollHint>
     </Section>
   )

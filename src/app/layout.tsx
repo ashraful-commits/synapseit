@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 
 import Loader from '@/components/Loader'
 import GSAPProvider from '@/components/GSAPProvider'
+import CustomCursor from '@/components/CustomCursor'
 
 export default function RootLayout({
   children,
@@ -31,8 +32,9 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <GSAPProvider />
         <Loader />
+        <GSAPProvider />
+        <CustomCursor />
         {children}
       </body>
     </html>
